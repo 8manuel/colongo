@@ -1,10 +1,13 @@
 package test
 
 import (
-	"encoding/base32"
+	"fmt"
 	"log"
 	"testing"
 
+	"bitbucket.org/thex/colongo/colon"
+
+	"github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/keypair"
 )
 
@@ -35,15 +38,22 @@ func TestAddrGenRandom2(t *testing.T) {
 	seed, addr := pair.Seed(), pair.Address()
 	// print the result
 	log.Printf("Seed %s, len %d , Address %s\n", seed, len(seed), addr)
+
+	// convert the seed to []byte
+	bs, err := colon.MSeed2Bytes(seed)
+	log.Printf("Extracted from seed %s, this %X\n", seed, bs)
 }
 
 func TestAddrGenDet1(t *testing.T) {
 	// generate a [32]byte seed
 	bytes := []byte("no se como hacer esto asi que me lo invento")
+	//bytes = []byte{110, 111, 32, 67, 68, 69, 70, 71, 64, 65, 66, 67, 68, 69, 70, 71, 64, 65, 66, 67, 68, 69, 70, 71, 64, 65, 66, 67, 68, 69, 70, 71}
 	byteSeed := [32]byte{}
 	for i := 0; i < 32; i++ {
 		byteSeed[i] = bytes[i]
 	}
+	log.Printf("Using byteSeed \"%s\", generate a keypair\n", byteSeed)
+
 	// generate the keypair from the seed
 	pair, err := keypair.FromRawSeed(byteSeed)
 	if err != nil {
@@ -52,14 +62,11 @@ func TestAddrGenDet1(t *testing.T) {
 
 	// get and print the seed and the address
 	seed, addr := pair.Seed(), pair.Address()
-	log.Printf("Seed %s, Address %s\n", seed, addr)
+	log.Printf("Keypair Seed %s, Address %s\n", seed, addr)
 
 	// convert the seed to []byte
-	data, err := base32.StdEncoding.DecodeString(pair.Seed())
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Seed \"%s\", byteseed \"%s\"\n", byteSeed, data[1:33])
+	btyeSeed, err := colon.MSeed2Bytes(seed)
+	log.Printf("Extracted from seed %s, this \"%s\"\n", seed, btyeSeed)
 }
 
 func TestAddrParse(t *testing.T) {
@@ -70,4 +77,19 @@ func TestAddrParse(t *testing.T) {
 	}
 	//	log.Printf("Seed %s, Address %s\n", pair.Seed(), pair.Address())
 	log.Printf("Seed %s, Address %s\n", pair, pair.Address())
+}
+
+func TestAddrBalance(t *testing.T) {
+
+	account, err := horizon.DefaultTestNetClient.LoadAccount(*flgAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Balances for account:", *flgAddr)
+
+	for _, balance := range account.Balances {
+		log.Println(balance)
+	}
+
 }

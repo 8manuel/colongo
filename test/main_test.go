@@ -2,17 +2,23 @@ package test
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"testing"
 )
 
+var flgAmt *int
+var flgAddr *string
+
 func TestMain(m *testing.M) {
 
 	var err error
-	// load flags, with "flags" all flag are overriden (except logLevel)
-	flgAmt := flag.Int("flgAddr", 1000, "Amount")
-	flgAddr := flag.String("flgAddr", "SDNYODGEMGKGIBNCR6C6XYQ7LUH5CIL2MNNIDTQQPWO6XNTIAVRHF43P ", "Address")
+	// load flags
+	flgAmt = flag.Int("flgAmt", 1000, "Amount")
+	flgAddr = flag.String("flgAddr", "GBIYBTHFAOEZNBVDFHAAQWD25EG2CVXCC4PQ333PIUQGRVZN5MJEZRHO", "Address")
 	flag.Parse()
+	_, _, _ = err, flgAmt, flgAddr
+	fmt.Println("running with flags", "flaAmt", *flgAmt, "flgAddr", *flgAddr, "\n")
 
 	// execute the rest of tests, m.Run() executes tests in the following order:
 	// for each file test/*.go file sorted alphabetically
