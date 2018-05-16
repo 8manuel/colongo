@@ -5,8 +5,7 @@ import (
 	"log"
 	"testing"
 
-	"bitbucket.org/thex/colongo/colon"
-
+	"github.com/8manuel/colongo/colon"
 	"github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/keypair"
 )
@@ -20,7 +19,7 @@ func TestAddrGenRandom1(t *testing.T) {
 	// generate a random keypair
 	pair, err := keypair.Random()
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
 	// print the seed and address
 	log.Println(pair.Seed(), pair.Address())
@@ -32,7 +31,7 @@ func TestAddrGenRandom2(t *testing.T) {
 	var pair *keypair.Full
 	var err error
 	if pair, err = keypair.Random(); err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
 	// get the seed and the address
 	seed, addr := pair.Seed(), pair.Address()
@@ -57,7 +56,7 @@ func TestAddrGenDet1(t *testing.T) {
 	// generate the keypair from the seed
 	pair, err := keypair.FromRawSeed(byteSeed)
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
 
 	// get and print the seed and the address
@@ -73,7 +72,7 @@ func TestAddrParse(t *testing.T) {
 	// parse a seed SDNYODGEMGKGIBNCR6C6XYQ7LUH5CIL2MNNIDTQQPWO6XNTIAVRHF43P into a keypair with addr GAMDGSB4NNTY4GIQMSQVSDMDNKAVDQTHRS7HSL5JJJRRBFKWHPJZHA7K
 	pair, err := keypair.Parse("SDNYODGEMGKGIBNCR6C6XYQ7LUH5CIL2MNNIDTQQPWO6XNTIAVRHF43P")
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
 	//	log.Printf("Seed %s, Address %s\n", pair.Seed(), pair.Address())
 	log.Printf("Seed %s, Address %s\n", pair, pair.Address())
@@ -83,7 +82,7 @@ func TestAddrBalance(t *testing.T) {
 
 	account, err := horizon.DefaultTestNetClient.LoadAccount(*flgAddr)
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
 
 	fmt.Println("Balances for account:", *flgAddr)

@@ -1,3 +1,8 @@
+// To execute all test functions, type in the terminal
+//  go test
+// To execute an specific test function, like TestAddrBalance, type in the terminal
+//  go test -run TestAddrBalance
+
 package test
 
 import (
