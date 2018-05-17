@@ -58,12 +58,10 @@ func fundAddress(addr string) (err error) {
 }
 
 func balXLMAddress(addr string) (err error) {
-
 	account, err := horizon.DefaultTestNetClient.LoadAccount(addr)
 	if err != nil {
 		return err
 	}
-
 	for _, balance := range account.Balances {
 		fmt.Println("Balances for account:", addr, balance)
 	}
@@ -99,7 +97,7 @@ func TestAssetFund(t *testing.T) {
 	}
 }
 
-func TestAssetBalXLM(t *testing.T) {
+func TestAssetBal(t *testing.T) {
 	// get the issuing and distribution keypairs
 	pairIss, pairDis, err := getAssetKeypairs()
 	if err != nil {
@@ -121,19 +119,29 @@ func TestAssetTrust(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err = colon.MTransTrust(pairDis, "VEF", pairIss.Address(), "1000"); err != nil {
+	if err = colon.MTransTrust(pairDis, "VEF", pairIss.Address(), "1500"); err != nil {
 		t.Error(err)
 	}
 }
 
-func TestTransPay(t *testing.T) {
+func TestTransPayXLM(t *testing.T) {
 	// get the issuing and distribution keypairs
 	pairIss, pairDis, err := getAssetKeypairs()
 	if err != nil {
 		t.Error(err)
 	}
-	if err = colon.MTransPayment(pairDis, pairIss.Address(), "10", true); err != nil {
+	if err = colon.MTransPayment(pairDis, pairIss.Address(), "", "0.1", true); err != nil {
 		t.Error(err)
 	}
+}
 
+func TestTransPayAsset(t *testing.T) {
+	// get the issuing and distribution keypairs
+	pairIss, pairDis, err := getAssetKeypairs()
+	if err != nil {
+		t.Error(err)
+	}
+	if err = colon.MTransPayment(pairIss, pairDis.Address(), "VEF", "1500", true); err != nil {
+		t.Error(err)
+	}
 }

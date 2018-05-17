@@ -79,16 +79,12 @@ func TestAddrParse(t *testing.T) {
 }
 
 func TestAddrBalance(t *testing.T) {
-
 	account, err := horizon.DefaultTestNetClient.LoadAccount(*flgAddr)
 	if err != nil {
 		t.Error(err)
 	}
-
 	fmt.Println("Balances for account:", *flgAddr)
-
 	for _, balance := range account.Balances {
 		log.Println(balance)
 	}
-
 }
