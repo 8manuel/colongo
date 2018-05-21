@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/8manuel/colongo/colon"
-	"github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/keypair"
 )
 
@@ -57,13 +56,12 @@ func fundAddress(addr string) (err error) {
 	return err
 }
 
-func balXLMAddress(addr string) (err error) {
-	account, err := horizon.DefaultTestNetClient.LoadAccount(addr)
-	if err != nil {
-		return err
-	}
-	for _, balance := range account.Balances {
-		fmt.Println("Balances for account:", addr, balance)
+func balAddress(addr string) (err error) {
+	account, err := colon.MLoadAccount(addr)
+	if err == nil {
+		for _, balance := range account.Balances {
+			fmt.Println("Addr", addr, balance)
+		}
 	}
 	return err
 }
@@ -104,10 +102,10 @@ func TestAssetBal(t *testing.T) {
 		t.Error(err)
 	}
 	// check both addresses balance
-	if err = balXLMAddress(pairIss.Address()); err != nil {
+	if err = balAddress(pairIss.Address()); err != nil {
 		t.Error(err)
 	}
-	if err = balXLMAddress(pairDis.Address()); err != nil {
+	if err = balAddress(pairDis.Address()); err != nil {
 		t.Error(err)
 	}
 
@@ -119,7 +117,7 @@ func TestAssetTrust(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err = colon.MTransTrust(pairDis, "VEF", pairIss.Address(), "1500"); err != nil {
+	if err = colon.MTransTrust(pairDis, "VEF", pairIss.Address(), "1500", true); err != nil {
 		t.Error(err)
 	}
 }
@@ -142,6 +140,28 @@ func TestTransPayAsset(t *testing.T) {
 		t.Error(err)
 	}
 	if err = colon.MTransPayment(pairIss, pairDis.Address(), "VEF", "1500", true); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestTransAllowTrust(t *testing.T) {
+	// get the issuing and distribution keypairs
+	pairIss, pairDis, err := getAssetKeypairs()
+	if err != nil {
+		t.Error(err)
+	}
+	if err = colon.MAllowTrust(pairIss, "VEF", pairDis.Address(), true, false); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestTransSetOptions(t *testing.T) {
+	// get the issuing and distribution keypairs
+	pairIss, _, err := getAssetKeypairs()
+	if err != nil {
+		t.Error(err)
+	}
+	if err = colon.MSetOptions(pairIss, map[string]interface{}{"SetFlags": uint32(0x01 | 0x02 | 0x04)}); err != nil { // authReq+authRev+authImm
 		t.Error(err)
 	}
 }
