@@ -128,7 +128,8 @@ func TestTransPayXLM(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err = colon.MTransPayment(pairDis, pairIss.Address(), "", "0.1", true); err != nil {
+	_ = pairIss
+	if err = colon.MTransPayment(pairDis, "GBUAFDIXDT4EOPLAJN7CWVXSHRN3KH2ASKRNMCIIIMXOO4QYWFIHMBEG", "", "0.1", true); err != nil {
 		t.Error(err)
 	}
 }
@@ -161,7 +162,9 @@ func TestTransSetOptions(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err = colon.MSetOptions(pairIss, map[string]interface{}{"SetFlags": uint32(0x01 | 0x02 | 0x04)}); err != nil { // authReq+authRev+authImm
+	//if err = colon.MSetOptions(pairIss, map[string]interface{}{"SetFlags": uint32(0x01 | 0x02 | 0x04)}); err != nil { // authReq+authRev+authImm
+	//if err = colon.MSetOptions(pairIss, map[string]interface{}{"ClearFlags": uint32(0x02 | 0x04)}); err != nil { // authRev+authImm
+	if err = colon.MSetOptions(pairIss, map[string]interface{}{"HomeDomain": "subdomain.domain.com"}); err != nil { // authRev+authImm
 		t.Error(err)
 	}
 }

@@ -1,6 +1,7 @@
 package test
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"testing"
@@ -41,6 +42,25 @@ func TestAddrGenRandom2(t *testing.T) {
 	// convert the seed to []byte
 	bs, err := colon.MSeed2Bytes(seed)
 	log.Printf("Extracted from seed %s, this %X\n", seed, bs)
+}
+
+func TestAddrGenDet0(t *testing.T) {
+	// generate a keypair using colon package function
+	pair := colon.DeterministicKeypair("Det0")
+	if pair == nil {
+		t.Error(errors.New("failed DeterministicKeypair"))
+		return
+	}
+	// get and print the seed and the address
+	seed, addr := pair.Seed(), pair.Address()
+	log.Printf("Keypair Seed %s, Address %s\n", seed, addr)
+
+	// convert the seed to []byte
+	btyeSeed, err := colon.MSeed2Bytes(seed)
+	if err != nil {
+		t.Error(err)
+	}
+	log.Printf("Extracted from seed %s, this \"%s\"\n", seed, btyeSeed)
 }
 
 func TestAddrGenDet1(t *testing.T) {
