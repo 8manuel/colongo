@@ -2,6 +2,7 @@ package colon
 
 import (
 	"encoding/base32"
+	"encoding/base64"
 	"fmt"
 	"strings"
 
@@ -74,16 +75,58 @@ func MLoadAccount(addr string) (account horizon.Account, err error) {
 	return account, err
 }
 
+//
+// BUILD TRANSACTION+ADD_OPERATION+SIGN+SEND FUNCTIONS
+// This functions just embed some Stellar libraries functions to make easier to the beginner to do the drills without knowing Stellar libraries.
+//
+
+// MTrans builds a transaction with no operation, it only contains the source account and the autosequence for testnet.
+// The function automatically inserts the network, source account and autosequence mutators, in muts it can be added other mutators such as operations to add.
+func MTrans(addrOrSeed string, muts ...build.TransactionMutator) (tb *build.TransactionBuilder, err error) {
+	if muts == nil {
+		// It just calls the transaction function with the network, source account and autosequence
+		return build.Transaction(build.TestNetwork, build.SourceAccount{addrOrSeed}, build.AutoSequence{horizon.DefaultTestNetClient})
+	}
+	tm := []build.TransactionMutator{build.TestNetwork, build.SourceAccount{addrOrSeed}, build.AutoSequence{horizon.DefaultTestNetClient}}
+	tm = append(tm, muts...)
+	return build.Transaction(tm...)
+}
+
+// MOpsAdd adds operations (or even other transaction mutators) to the pointer to the transaction builder; as is pased the pointer it does not return the builder.
+// This function automatically adds the build.Defaults{} as mutator, otherwise the transaction fails with txCode="tx_insufficient_fee".
+func MOpsAdd(tb *build.TransactionBuilder, muts ...build.TransactionMutator) (err error) {
+	// It just calls the transaction builder mutate function with operations received
+	if err = tb.Mutate(muts...); err != nil {
+		return err
+	}
+	return tb.Mutate(build.Defaults{})
+}
+
 // MSign signs the transaction with all the signers provided.
 func MSign(tx *build.TransactionBuilder, signers ...string) (txe build.TransactionEnvelopeBuilder, err error) {
 	// It just calls the transaction sign function with all the signers provided.
 	return tx.Sign(signers...)
 }
 
-// MSignAdd adds new signature to the transaction envelope; as is passed the envelope addres it does not return the envelope to the caller.
+// MSignAdd adds new signature to the transaction envelope; as is passed the envelope address it does not return the envelope to the caller.
 func MSignAdd(txe *build.TransactionEnvelopeBuilder, signer string) (err error) {
 	// It just calls the transaction envelope builder mutate with a sign object constructed with the signer string.
 	return txe.Mutate(build.Sign{signer})
+}
+
+// MSubmit converts a transaction envelope builder to base64 and sends to Stellar through horizon server.
+func MSubmit(txe build.TransactionEnvelopeBuilder) (resp horizon.TransactionSuccess, err error) {
+	// Convert to base64
+	txeB64, err := txe.Base64()
+	if err != nil {
+		return resp, err
+	}
+	// Send to Stellar
+	resp, err = horizon.DefaultTestNetClient.SubmitTransaction(txeB64)
+	if err != nil {
+		return resp, err
+	}
+	return resp, err
 }
 
 // MSignSubmit signs the transaction, converts to base64 and sends to Stellar through horizon server.
@@ -93,22 +136,6 @@ func MSignSubmit(seed string, tx *build.TransactionBuilder) (resp horizon.Transa
 	if err != nil {
 		return resp, err
 	}
-	// Convert to base64
-	txeB64, err := txe.Base64()
-	if err != nil {
-		return resp, err
-	}
-	// Send to Stellar
-	resp, err = horizon.DefaultTestNetClient.SubmitTransaction(txeB64)
-	if err != nil {
-		MHorizonProblemView(err)
-		return resp, err
-	}
-	return resp, err
-}
-
-// MSubmit converts a transaction envelope builder to base64 and sends to Stellar through horizon server.
-func MSubmit(seed string, txe build.TransactionEnvelopeBuilder) (resp horizon.TransactionSuccess, err error) {
 	// Convert to base64
 	txeB64, err := txe.Base64()
 	if err != nil {
@@ -146,6 +173,19 @@ func MHorizonErrorResultCode(herr error) (txCode string, opCodes []string, err e
 		return rc.TransactionCode, rc.OperationCodes, nil
 	}
 }
+
+// MXdrToTrans returns a transaction envelope from a base64 xdr string.
+func MXdrToTrans(data string) (tx xdr.TransactionEnvelope, err error) {
+	// decode the base 64 data into a io.Reader and then unmarshal the stream into a transaction envelope (that has the transaction and the signatures)
+	b64r := base64.NewDecoder(base64.StdEncoding, strings.NewReader(data))
+	_, err = xdr.Unmarshal(b64r, &tx)
+	return tx, err
+}
+
+//
+// BASIC TRANSACTION OPERATIONS
+// This functions just embed some Stellar libraries functions to make easier to the beginner to do the drills without knowing Stellar libraries.
+//
 
 // MSetOptions sets the address options.
 // The options to set are defined in opts map with the option name as key and the value as option value that has a different type depending on the option.
@@ -254,6 +294,8 @@ func MTransPayment(pairSource *keypair.Full, addrDest, asset, amtStr string, che
 	return err
 }
 
+// MTransTrust generates a trust line from an address (obtained from pairDis) to an issuer address (addrIss).
+// The assCode and the limitStr indicate the asset name and the amount of the trustline; if checkIss is set checks that the address of pairDis exists (if not quits).
 func MTransTrust(pairDis *keypair.Full, assCode, addrIss, limitStr string, checkIss bool) (err error) {
 	// Make sure issuing address (addrIss) exists, so no fees are paid if it does not exist
 	if checkIss {
@@ -282,6 +324,8 @@ func MTransTrust(pairDis *keypair.Full, assCode, addrIss, limitStr string, check
 	return err
 }
 
+// MAllowTrust makes the issuer (in keypair) allow trust to the address (addr) for the asset assCode.
+// If checkIss is set checks that the address of pairDis exists (if not quits).
 func MAllowTrust(pairIss *keypair.Full, assCode, addr string, authorize, checkAddr bool) (err error) {
 	// Make sure address exists, so no fees are paid if it does not exist
 	if checkAddr {
@@ -303,7 +347,7 @@ func MAllowTrust(pairIss *keypair.Full, assCode, addr string, authorize, checkAd
 		return err
 	}
 	// Sign and submit the transaction
-	fmt.Println("AllowTrust Transaction", assCode, "from", pairIss.Address(), "to", addr)
+	fmt.Println("AllowTrust Transaction", assCode, "from", pairIss.Address(), "to", addr, "baseFee", tx.BaseFee)
 	if resp, err := MSignSubmit(seedDis, tx); err == nil {
 		fmt.Println("..successful", "Ledger", resp.Ledger, "Hash", resp.Hash)
 	}
