@@ -124,7 +124,10 @@ func MSubmit(txe build.TransactionEnvelopeBuilder) (resp horizon.TransactionSucc
 	// Send to Stellar
 	resp, err = horizon.DefaultTestNetClient.SubmitTransaction(txeB64)
 	if err != nil {
-		return resp, err
+		if strings.Contains(err.Error(), "error decoding horizon.Problem") {
+			// if there is a decoding problem usually is because of a horizon timeout, try submit a second time
+			resp, err = horizon.DefaultTestNetClient.SubmitTransaction(txeB64)
+		}
 	}
 	return resp, err
 }
@@ -152,6 +155,12 @@ func MSignSubmit(seed string, tx *build.TransactionBuilder) (resp horizon.Transa
 
 // MHorizonProblemView prints the details of an horizon error to be able to view what happens
 func MHorizonProblemView(err error) {
+	switch t := err.(type) {
+	case (*horizon.Error):
+	default:
+		fmt.Println("This is not a horizon.Error", t, err)
+		return
+	}
 	eo := err.(*horizon.Error)
 	eop := eo.Problem
 	fmt.Println("Horizon Problem", "status", eop.Status)
