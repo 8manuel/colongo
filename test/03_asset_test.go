@@ -146,6 +146,21 @@ func TestTransPayAsset(t *testing.T) {
 	}
 }
 
+func TestTransPayErr(t *testing.T) {
+	pair_A := colon.DeterministicKeypair("A")
+	pair_B := colon.DeterministicKeypair("B")
+
+	fmt.Printf("Issuer Address: %s\n Issuer Seed: %s\n", pair_A.Address(), pair_A.Seed())
+	fmt.Printf("Receiver Address: %s\n Receiver Seed: %s\n", pair_B.Address(), pair_B.Seed())
+
+	// send 1 VEF asset from account A (issuer) to account B (distributor); as there is no trust gives transaction:"tx_failed", operations:["op_no_trust"]
+	fmt.Printf("Send 1 VEF from A %s to B %s\n", pair_A.Address(), pair_B.Address())
+	err := colon.MTransPayment(pair_A, pair_B.Address(), "VEF", "1", false)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func TestTransAllowTrust1(t *testing.T) {
 	// get the issuing and distribution keypairs
 	pairIss, pairDis, err := getAssetKeypairs()
